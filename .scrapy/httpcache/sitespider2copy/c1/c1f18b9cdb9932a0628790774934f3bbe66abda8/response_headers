@@ -1,0 +1,13 @@
+Content-Length: 237
+Location: https://www.slalom.com/us/en/
+Cache-Control: max-age=300
+Expires: Tue, 04 Jun 2024 06:14:39 GMT
+Content-Type: text/html; charset=iso-8859-1
+Accept-Ranges: bytes
+Age: 0
+Date: Tue, 04 Jun 2024 06:09:39 GMT
+Strict-Transport-Security: max-age=31557600
+Set-Cookie: affinity="f4bf4b1ac2eeef11"; Path=/; HttpOnly
+X-Served-By: cache-bur-kbur8200173-BUR
+X-Cache: MISS
+X-Timer: S1717481379.882328,VS0,VS0,VE237

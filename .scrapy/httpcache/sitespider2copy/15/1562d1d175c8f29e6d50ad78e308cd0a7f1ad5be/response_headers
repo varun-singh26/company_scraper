@@ -1,0 +1,13 @@
+Date: Wed, 05 Jun 2024 05:07:02 GMT
+Content-Type: text/html; charset=UTF-8
+Link: <https://www.konrad.com/wp-json/>; rel="https://api.w.org/"
+Link: <https://www.konrad.com/wp-json/wp/v2/work-item/10421>; rel="alternate"; type="application/json"
+Link: <https://www.konrad.com/?p=10421>; rel=shortlink
+Vary: Accept-Encoding
+Cf-Cache-Status: DYNAMIC
+Report-To: {"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v4?s=Pk8WFmJyfBLbLTh43Lv9tp7TsQePviOpdDi7wT3IyJfRit7%2Fx0HzFIH%2FBg%2BRKSagnp8dQ3Q3c3PuqOjGjL2zzZ7JKNAD2c331luMGxoRqqK9cIbJ0NlCbEQFREOVnZ2r4w%3D%3D"}],"group":"cf-nel","max_age":604800}
+Nel: {"success_fraction":0,"report_to":"cf-nel","max_age":604800}
+Server: cloudflare
+Cf-Ray: 88eda2fac8a514e2-LAX
+Content-Encoding: br
+Alt-Svc: h3=":443"; ma=86400
