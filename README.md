@@ -36,15 +36,15 @@ Once all the prerequisites are met, the spider can be installed from the GitHub 
 #1. Clone the Repository:
 
 #Open a terminal and run the following command to clone the repository using Git CLI:
-git clone https://github.com/varun-singh26/CompanyScraper.git
+git clone https://github.com/varun-singh26/company_scraper.git
 
 #Navigate to the cloned repository in your terminal:
-cd CompanyScraper
+cd company_scraper
 
 #2. Create a Virtual Environment to install all dependencies
 
-python -m venv venv
-source venv/bin/activate   # On Windows: venv\Scripts\activate
+python -m venv venv1
+source venv1/bin/activate   # On Windows: venv1\Scripts\activate
 
 #3. Once in virtual environment, install the required dependencies, listed in requirements.txt :
 pip install -r requirements.txt
