@@ -30,7 +30,7 @@ Python (version 3.6 or higher),
 pip (Python package installer),
 Git CLI (for cloning the repository),
 
-Once all the prerequisites are met, the spider can be installed from the GitHub repository.
+Once all the prerequisites are met, the spider can be installed from the GitHub repository on your local machine.
 
 ```bash
 #1. Clone the Repository:
