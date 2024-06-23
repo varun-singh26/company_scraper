@@ -10,15 +10,12 @@ from scrapy.spidermiddlewares.httperror import HttpError
 from scrapy.loader import ItemLoader
 import spacy
 import spacy_transformers
-from companyscraper.items import Client, Profile
+from companyscraper.items import Client
 import lxml
-from PIL import Image
-import pytesseract
-import requests
-from io import BytesIO
 
-class V3Spider(CrawlSpider):
-    name = "v3"
+
+class V4Spider(CrawlSpider):
+    name = "v4"
     allowed_domains = ["www.ltimindtree.com", "www.hcltech.com", "www.persistent.com", "www.konrad.com", "www.slalom.com", "www.cognizant.com", "www.perficient.com", "www.accenture.com", "www.infosys.com"] #"www.linkedin.com"
     start_urls = ["https://www.ltimindtree.com", "https://www.hcltech.com", "https://www.accenture.com/us-en", "https://www.slalom.com/us/en", "https://www.persistent.com", "https://www.cognizant.com/us/en", "https://www.infosys.com", "https://www.perficient.com"] # "https://www.cognizant.com/us/en" "https://www.linkedin.com/in/tylerschulze/  "https://www.slalom.com/us/en" "https://www.cognizant.com/us/en/industries/life-sciences-technology-solutions"
 
@@ -31,15 +28,12 @@ class V3Spider(CrawlSpider):
 
     )
 
-
     client_list = []
-    profile_list = []
     nlp = spacy.load("en_core_web_trf") 
 
-    custom_settings = {
-        "CLOSESPIDER_PAGECOUNT": 200
-    }
-
+    '''custom_settings = {
+        "CLOSESPIDER_PAGECOUNT": 100
+    }'''
     
     def parse_item(self, response):
     
@@ -48,41 +42,37 @@ class V3Spider(CrawlSpider):
 
         
         try:
-            domain = response.url.split("/")[2]
             soup = BeautifulSoup(response.body, "html.parser")
             body = soup.find("body")
-            
-                
             tags = self.find_all_tags(body)
 
-            entity = ""
-            for header in tags: #["h1", "h2", "h3", "h4", "h5", "h6"] , for li we don't want to search siblings (in list, siblings will refer to different clients)
-                header_text = header.get_text(separator=" ", strip=True)
-                doc = self.nlp(header_text)
-                for i in range(len(doc.ents)): #base our client off the first appropriate entity found
-                    if doc.ents[i].label_ in ["PERSON", "ORG"]:
-                        entity = doc.ents[i]
-                        break
-                
-                if not entity :
-                    continue 
-                         
-                exists, client = self.client_already_exists(entity.label_, entity.text, self.client_list) #We want a single client
-                if not exists:                                                                             #to result from all the text
-                                                                                                            # in a header
-                    client = self.create_initialize_item("client")
-                    client["web_page_url"] = url
-                    self.client_list.append(client)
+            '''additional_tags = body.find_all('div', class_='client-info')
+            additional_tags += body.find_all('div', attrs={'data-client-section': 'true'})
+            tags.extend(additional_tags)'''
 
-                for ent in doc.ents: #Adding all other entity information to the same client  
-                    if ent.label_ == "PERSON":
-                        client["representatives"].append(ent.text)
-                    elif ent.label_ == "ORG":
-                        client["company"].append(ent.text)
-                
-                #client["context"].append(header_text) #need to add header_text to the company or representative field
+
+            for tag in tags: #["h1", "h2", "h3", "h4", "h5", "h6",] , for li we don't want to search siblings (in list, siblings will refer to different clients)
+                doc = self.nlp(tag.get_text(separator="", strip=True))
+                if doc.ents:
+                    for entity in doc.ents:
+                        if entity.label_ == "PERSON" or entity.label_ == "ORG":
+                            exists, client = self.client_already_exists(entity.label_, entity.text, self.client_list) 
+                            if not exists:
+                                client = self.create_initialize_client()
+                                client["web_page_url"] = url
+                                if entity.label_ == "PERSON":
+                                    client["representatives"].append(entity.text)
+                                elif entity.label_ == "ORG":
+                                    client["company"].append(entity.text)
+                                self.client_list.append(client)
                             
-                self.organize_information(client, header, self.nlp)
+                            self.organize_information(client, tag, self.nlp)
+                                
+                        else:
+                            pass
+
+                else:
+                    pass 
 
         except AttributeError as e:
             self.logger.error(f"Failed to parse item on {response.url}: {e}")
@@ -115,14 +105,18 @@ class V3Spider(CrawlSpider):
         
         return True
     
-    
-    
     def extract_info_from_siblings(self, client, element, nlp):
         all_siblings = self.get_siblings(element) #don't want to extract the text from the start element,
                                                     #because that will already be included in the "representatives"
                                                     #or "company" fields for the client
+        
         self.extract_info_from_elements(client, all_siblings, nlp) #search sibling tags, and children of sibling tags
-   
+
+    
+    
+    
+    
+    
     def extract_info_from_parent(self, client, element, nlp):
         parent = element.parent
         if parent and isinstance(parent, Tag):
@@ -136,8 +130,8 @@ class V3Spider(CrawlSpider):
 
     def extract_info_from_elements(self, client, elements, nlp):
         for element in elements:
-            if isinstance(element, Tag): 
-                text = self.get_text_recursive(element) 
+            if isinstance(element, Tag):
+                text = self.get_text_recursive(element)
                 if text:
                     doc = nlp(text)  
                     for entity in doc.ents: #Going to get a lot of client objects with "Slalom" in one of their fields
@@ -154,7 +148,7 @@ class V3Spider(CrawlSpider):
         if isinstance(tag, NavigableString): #Navigable String is a piece of text 
             return tag.strip()               #in the Beautiful Soup Parse Tree
         elif isinstance(tag, Tag):
-            parts = [V3Spider.get_text_recursive(child) for child in tag.children]
+            parts = [V4Spider.get_text_recursive(child) for child in tag.children]
             return " ".join(filter(None, parts)).strip()
         return ""
 
@@ -162,7 +156,7 @@ class V3Spider(CrawlSpider):
     @staticmethod
     def find_all_tags(body):
         all_tags = []
-        tags = ["h1", "h2", "h3", "h4", "h5", "h6"]
+        tags = ["h1", "h2", "h3", "h4", "h5", "h6",]
         for tag in tags:
             elements = body.find_all(tag)
             all_tags = all_tags + elements
@@ -172,18 +166,14 @@ class V3Spider(CrawlSpider):
     def client_already_exists(type, text, client_list):
         if type == "PERSON":
             for client in client_list:
-                if text in client["representatives"]:
-                    return (True, client) 
-                '''if any (text in context for context in client["context"]): #If the client's context contains the passed text,
-                    return (True, client)'''                                           # it likely is the desired client
+                if text in client["representatives"] or text in client["context"]: #If the client's context contains the passed text,
+                    return (True, client)                                           # it likely is the desired client
             return (False, None)
         
         elif type == "ORG":
             for client in client_list:
-                if text in client["company"]:#If the client's context contains the passed text,
-                    return (True, client)     # it likely is the desired client
-                '''if any(text in context for context in client["context"]):
-                    return (True, client)'''                                   
+                if text in client["company"] or text in client["context"]:#If the client's context contains the passed text,
+                    return (True, client)                                           # it likely is the desired client
             return (False, None)
         
         return False, None
@@ -201,24 +191,15 @@ class V3Spider(CrawlSpider):
     
 
     @staticmethod
-    def create_initialize_item(string):
-        if string == "client":
-            client = Client()
-            client["representatives"] = []
-            client["company"] = []
-            client["context"] = []
-            client["web_page_url"] = ""
-            return client
-        else:
-            profile = Profile()
-            profile["name"] = ""
-            profile["company"] = ""
-            profile["position"] = ""
-            profile["about_me"] = []
-            profile["experience"] = {}
-            return profile
+    def create_initialize_client():
+        client = Client()
+        client["representatives"] = []
+        client["company"] = []
+        client["context"] = []
+        client["web_page_url"] = ""
+        return client
 
-    def handle_error(self, failure): #failure is the response when an error occurs
+    '''def handle_error(self, failure): #failure is the response when an error occurs
         # Log all failures
         self.logger.error(repr(failure)) 
 
@@ -234,18 +215,20 @@ class V3Spider(CrawlSpider):
 
         elif failure.check(TimeoutError, TCPTimedOutError):
             request = failure.request
-            self.logger.error(f"TimeoutError on {request.url}")
+            self.logger.error(f"TimeoutError on {request.url}")'''
 
     def closed(self, reason): #By making it an instance method, this method can 
                                 # access all the attributes of this instance of Sitespider2copySpider 
     #print each client in final client list
         self.logger.info(f"Spider closed: {reason}")
         for client in self.client_list:
+            context_text = " ".join(client["context"])
+            if len(context_text) > 100:
+                self.client_list.remove(client)
+        
+        for 
             print(f"Client: {client['company']}")
             print(f"Client representatives: {client['representatives']}")
             print(f"Client Context: {client['context']}")
             print(f"Client was mentioned on these urls: {client['web_page_url']}")
             print("---------")
-
-
-    
